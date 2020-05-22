@@ -18,5 +18,5 @@ Thermal sensor xxx
 | Observation orientation  | Vertically downward |                                       |
 | Frame rate               | 10 fps              |                                       |
 | Room temperature         | °C                  |                                       |
-| Layout patterns          |                     |                                       |
+| Layout patterns          |                     | To see the detail in Part Layout      |
 

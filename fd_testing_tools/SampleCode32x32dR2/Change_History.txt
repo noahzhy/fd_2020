@@ -1,0 +1,30 @@
+V0.01: 18.06.2018
+adapted calcTO to be working for ambient temperatures that are below the first value in the table.
+	if(!dontCalcTA){
+		if(TAmb<XTATemps[0]){
+			CurTACol=0;
+		}
+		else{
+			for(CurTACol=0;CurTACol<NROFTAELEMENTS;CurTACol++){
+				if((XTATemps[CurTACol]<=TAmb)&&(XTATemps[CurTACol+1]>TAmb))
+						break;
+			}
+		}
+		dTA=TAmb-XTATemps[CurTACol];
+	}
+
+V0.02: 05.09.2018
+added BitBanging to the sample code, check for the define BITBANGING
+
+v0.03: 12.09.2018
+fixed a bug for the DeviceID. This is 32 bit and not 16 bit.
+
+v0.04: 14.09.2018
+changed the Init from the user settings to the calibration settings
+set the define AdjustOffsetGain in the defs.h, should always be used
+
+v0.05: 27.02.2019
+deleted defines (in defs.h) for older Look-up Tables
+
+v0.06: 05.06.2019
+changed VddGrad from unsigned short to signed short

@@ -1,0 +1,3 @@
+[submodule "dataset/FIR"]
+	path = dataset/FIR
+	url = https://github.com/noahzhy/FIR-Image-Action-Dataset.git

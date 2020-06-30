@@ -17,20 +17,23 @@ batch_size = 1000
 epochs = 5
 
 
-def load_CNN_LSTM():
+def init_CNN_LSTM():
     model = Sequential()
+
     model.add(TimeDistributed(
         Conv2D(32, (3, 3), padding='same', activation='relu')))
-    model.add(TimeDistributed(BatchNormalization()))
     model.add(TimeDistributed(MaxPooling2D(pool_size=(2, 2))))
+
     model.add(TimeDistributed(
         Conv2D(64, (3, 3), padding='same', activation='relu')))
     model.add(TimeDistributed(MaxPooling2D(pool_size=(2, 2))))
-    # model.add(TimeDistributed(
-    #     Conv2D(128, (3, 3), padding='same', activation='relu')))
-    # model.add(TimeDistributed(MaxPooling2D(pool_size=(2, 2))))
+
+    model.add(TimeDistributed(
+        Conv2D(128, (3, 3), padding='same', activation='relu')))
+    model.add(TimeDistributed(MaxPooling2D(pool_size=(2, 2))))
+
     model.add(TimeDistributed(Flatten()))
-    model.add(LSTM(256, return_sequences=True))
+    model.add(LSTM(512, return_sequences=True))
     model.add(LSTM(128, return_sequences=False))
     model.add(Dense(64, activation='relu'))
     model.add(Dense(8, activation='softmax'))
@@ -45,5 +48,4 @@ def load_CNN_LSTM():
     # pred = model.predict(xtest)
     # return pred
 
-
-load_CNN_LSTM()
+init_CNN_LSTM()

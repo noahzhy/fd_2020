@@ -7,10 +7,8 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import *
 from keras.layers import *
 from keras.models import *
-from tensorflow.keras.backend import *
-from tensorflow.keras.callbacks import *
-from tensorflow.keras import optimizers
 from keras.utils import plot_model
+from keras import optimizers, callbacks, backend
 
 SEED = 11
 random.seed(a=SEED)

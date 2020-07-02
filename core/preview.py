@@ -11,6 +11,9 @@ from PIL import Image, ImageTk
 import matplotlib.pyplot as plt
 import cv2
 import numpy as np
+from tkinter.filedialog import askopenfilename
+import os
+import glob
 
 
 class App:
@@ -36,14 +39,17 @@ class App:
         right_view = Label(imgs, image=im2)
         right_view.pack(side='right', padx=10, pady=10)
 
-        bar = Scale(self.app, from_=0, to=2000, tickinterval=100,
+        bar = Scale(self.app, from_=0, to=2000, tickinterval=200,
                     orient=HORIZONTAL, length=690)
         bar.pack()
 
         operation_frame = LabelFrame(self.app, text="Operation")
         operation_frame.pack(side='top', fill='both', expand=True, padx=10, pady=5)
 
-        play_btn = Button(operation_frame, text="Play [Space]")
+        open_btn = Button(operation_frame, text="Open [Ctrl+O]", command=self.select_path)
+        open_btn.pack(side='left', fill='x', expand=True, padx=10, pady=10)
+
+        play_btn = Button(operation_frame, text="Play [Space]", command=self.update_win)
         play_btn.pack(side='left', fill='x', expand=True, padx=10, pady=10)
 
         start_btn = Button(operation_frame, text="Start [<]")
@@ -71,43 +77,35 @@ class App:
 
         self.left_view = left_view
         self.right_view = right_view
+        self.bar = bar
 
         self.app.mainloop()
 
-    def load_data(self, data_path, video_path):
-        self.data = pd.read_csv(data_path, index_col=None).iloc[:, 2:]
-        self.cap = cv2.VideoCapture(video_path)
-
-        # if cap.isOpened():
-        #     while True:
-        #         ret, frame = cap.read()
-        #         if ret == True:
-        #             print(cap.get(cv2.CAP_PROP_POS_FRAMES)/25*7.8)
-        #             cv2.imshow('video', frame)
-        #         else:
-        #             break
-
-        #         if cv2.waitKey(20)==27:
-        #             break
-
-    def get_fir_frame(self, frame_num):
-        data = np.array(self.data[frame_num:frame_num+1]).reshape((24, 32))
+    def get_fir_frame(self, pos):
+        df = self.data[pos:pos+1]
+        data = np.array(df).reshape((24, 32))
         frame = self.data_to_frame(data)
         frame = self.raw_img(frame)
-        return frame
-        # imshow('preview', frame)
-        # waitKey(0)
+        return self.openCV_to_PhotoImage(frame)
 
-        # for i in p768.itertuples(index=False):
-        #     data = array(i).reshape((24, 32))
-        #     # plt.imshow(data)
-        #     # plt.pause(0.0001)
-        #     frame = self.data_to_frame(data)
-        #     frame = self.raw_img(frame)
-        #     imshow('preview', frame)
+    def get_video_frame(self, pos):
+        self.cap.set(cv2.CAP_PROP_POS_FRAMES, pos)
+        _, img = self.cap.read()
+        return self.openCV_to_PhotoImage(img)
 
-        #     sleep(0.0125) # x10
-        #     waitKey(1)
+    def update_win(self, pos=0):
+        frame_num = int(self.bar.get()/25*7.8)
+        if frame_num >= len(self.data):
+            frame_num = len(self.data)-1
+
+        img_left = self.get_fir_frame(frame_num)
+        self.left_view.config(image=img_left)
+        self.left_view.image = img_left
+
+        img_right = self.get_video_frame(self.bar.get()-25)
+        self.right_view.config(image=img_right)
+        self.right_view.image = img_right
+        self.app.update()
 
     @staticmethod
     def normalization(data):
@@ -132,11 +130,25 @@ class App:
         img = merge((r, g, b))
         return ImageTk.PhotoImage(Image.fromarray(img))
 
+    def select_path(self):
+        path_ = askopenfilename()
+        father_path = os.path.dirname(os.path.dirname(path_))
+        date = os.path.basename(path_).split('.')[0].split('_')[0:2]
+        print(date)
+        data_path = glob.glob('{}/data/{}_{}_*.csv'.format(father_path, date[0], date[1]))[0]
+        video_path = glob.glob('{}/video/{}_{}_*.mp4'.format(father_path, date[0], date[1]))[0]
+        print(data_path, video_path)
+        self.data = pd.read_csv(data_path, index_col=None).iloc[:, 2:]
+        self.cap = cv2.VideoCapture(video_path)
+        self.bar['to'] = self.cap.get(cv2.CAP_PROP_FRAME_COUNT)
+        self.bar['tickinterval'] = int(self.bar['to']/10)
+        self.update_win(0)
+
 
 if __name__ == "__main__":
     data_path = r'data\20200628_183032_mlx90640_01_light_natural.csv'
     video_path = r'video\20200628_183032_mlx90640_01_light_natural.mp4'
 
     app = App()
-    data = app.load_data(data_path, video_path)
-    app.get_fir_frame(79)
+    # data = app.load_data(data_path, video_path)
+    # app.update_win(78)

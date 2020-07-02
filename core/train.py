@@ -10,8 +10,9 @@ from keras.models import *
 from keras.utils import plot_model
 from keras import optimizers, callbacks, backend
 
-SEED = 11
-random.seed(a=SEED)
+# set the seed to random fixly
+# SEED = 11
+# random.seed(a=SEED)
 
 batch_size = 1000
 epochs = 5

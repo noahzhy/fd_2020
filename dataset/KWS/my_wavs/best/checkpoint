@@ -1,0 +1,2 @@
+model_checkpoint_path: "crnn_10000.ckpt-300"
+all_model_checkpoint_paths: "crnn_10000.ckpt-300"

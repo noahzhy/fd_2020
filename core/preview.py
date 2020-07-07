@@ -25,7 +25,7 @@ class App:
         self.app.title("Video marking tool")
         # self.app.iconbitmap("icon.ico")
 
-        img_rgb = imread(r'logo.jpg')
+        img_rgb = imread(r'core/logo.jpg')
         img_rgb = resize(img_rgb, (320, 240), interpolation=INTER_NEAREST)
 
         imgs = LabelFrame(self.app, text="Videos")
@@ -49,7 +49,7 @@ class App:
         open_btn = Button(operation_frame, text="Open [Ctrl+O]", command=self.select_path)
         open_btn.pack(side='left', fill='x', expand=True, padx=10, pady=10)
 
-        play_btn = Button(operation_frame, text="Play [Space]", command=self.update_win)
+        play_btn = Button(operation_frame, text="Play [Space]", command=self.auto_play)
         play_btn.pack(side='left', fill='x', expand=True, padx=10, pady=10)
 
         start_btn = Button(operation_frame, text="Start [<]")
@@ -93,8 +93,9 @@ class App:
         _, img = self.cap.read()
         return self.openCV_to_PhotoImage(img)
 
-    def update_win(self, pos=0):
-        frame_num = int(self.bar.get()/25*7.8)
+    def update_win(self, pos=0, fix=25):
+        rate = self.bar.get()/len(self.data)
+        frame_num = int(self.bar.get()/25*7.9)
         if frame_num >= len(self.data):
             frame_num = len(self.data)-1
 
@@ -102,23 +103,39 @@ class App:
         self.left_view.config(image=img_left)
         self.left_view.image = img_left
 
-        img_right = self.get_video_frame(self.bar.get()-25)
+        img_right = self.get_video_frame(self.bar.get()-fix)
         self.right_view.config(image=img_right)
         self.right_view.image = img_right
         self.app.update()
 
-    @staticmethod
-    def normalization(data):
-        np.array(data)
-        _range = data.max() - data.min()
-        return (data - data.min()) / _range
+    def auto_play(self):
+        # current_status_play = False
+        current_pos = self.bar.get()
+
+        # if current_status_play == False:
+        #     current_status_play = True
+        # else:
+        #     current_status_play = False
+
+        while current_pos <= self.bar['to']:
+            current_pos += 1
+            self.update_win(current_pos)
+            self.bar.set(current_pos)
+
+            sleep(1/25)
 
     @staticmethod
     def raw_img(frame):
         return resize(frame, (320, 240), interpolation=INTER_NEAREST)
 
-    def data_to_frame(self, data):
-        data = self.normalization(data)
+    @staticmethod
+    def data_to_frame(data):
+        def normalization(data):
+            np.array(data)
+            _range = data.max() - data.min()
+            return (data - data.min()) / _range
+
+        data = normalization(data)
         img_gray = (data*255).astype('uint8')
         heatmap_g = img_gray.astype('uint8')
         frame = applyColorMap(heatmap_g, COLORMAP_JET)
@@ -134,20 +151,25 @@ class App:
         path_ = askopenfilename()
         father_path = os.path.dirname(os.path.dirname(path_))
         date = os.path.basename(path_).split('.')[0].split('_')[0:2]
-        print(date)
         data_path = glob.glob('{}/data/{}_{}_*.csv'.format(father_path, date[0], date[1]))[0]
         video_path = glob.glob('{}/video/{}_{}_*.mp4'.format(father_path, date[0], date[1]))[0]
         print(data_path, video_path)
+
         self.data = pd.read_csv(data_path, index_col=None).iloc[:, 2:]
         self.cap = cv2.VideoCapture(video_path)
         self.bar['to'] = self.cap.get(cv2.CAP_PROP_FRAME_COUNT)
         self.bar['tickinterval'] = int(self.bar['to']/10)
-        self.update_win(0)
+
+        while True:
+            self.update_win()
+
+        # self.auto_play()
+        # self.update_win(0)
 
 
 if __name__ == "__main__":
-    data_path = r'data\20200628_183032_mlx90640_01_light_natural.csv'
-    video_path = r'video\20200628_183032_mlx90640_01_light_natural.mp4'
+    # data_path = r'data\20200628_183032_mlx90640_01_light_natural.csv'
+    # video_path = r'video\20200628_183032_mlx90640_01_light_natural.mp4'
 
     app = App()
     # data = app.load_data(data_path, video_path)

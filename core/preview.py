@@ -20,6 +20,7 @@ class App:
     def __init__(self):
         self.data = None
         self.cap = None
+        self.play_status = False
         self.app = Tk()
         self.app.resizable(width=False, height=False)
         self.app.title("Video marking tool")
@@ -49,8 +50,11 @@ class App:
         open_btn = Button(operation_frame, text="Open [Ctrl+O]", command=self.select_path)
         open_btn.pack(side='left', fill='x', expand=True, padx=10, pady=10)
 
-        play_btn = Button(operation_frame, text="Play [Space]", command=self.auto_play)
+        play_btn = Button(operation_frame, text="Play [Space]", command=self.start_play)
         play_btn.pack(side='left', fill='x', expand=True, padx=10, pady=10)
+
+        stop_btn = Button(operation_frame, text="Stop [Space]", command=self.stop_play)
+        stop_btn.pack(side='left', fill='x', expand=True, padx=10, pady=10)
 
         start_btn = Button(operation_frame, text="Start [<]")
         start_btn.pack(side='left', fill='x', expand=True, padx=10, pady=10)
@@ -93,9 +97,10 @@ class App:
         _, img = self.cap.read()
         return self.openCV_to_PhotoImage(img)
 
-    def update_win(self, pos=0, fix=25):
-        rate = self.bar.get()/len(self.data)
-        frame_num = int(self.bar.get()/25*7.9)
+    def update_win(self, pos=0, fix=100):
+        frame_num = int(len(self.data)*self.bar.get()/(self.bar['to']+1))
+        # frame_num = int(self.bar.get()/25*8)
+
         if frame_num >= len(self.data):
             frame_num = len(self.data)-1
 
@@ -108,21 +113,20 @@ class App:
         self.right_view.image = img_right
         self.app.update()
 
-    def auto_play(self):
-        # current_status_play = False
+    def start_play(self):
+        self.play_status = True
         current_pos = self.bar.get()
-
-        # if current_status_play == False:
-        #     current_status_play = True
-        # else:
-        #     current_status_play = False
-
         while current_pos <= self.bar['to']:
-            current_pos += 1
-            self.update_win(current_pos)
-            self.bar.set(current_pos)
+            if self.play_status:
+                current_pos += 1
+                self.update_win(current_pos)
+                self.bar.set(current_pos)
+                sleep(1/100)
+            else:
+                break
 
-            sleep(1/25)
+    def stop_play(self):
+        self.play_status = False
 
     @staticmethod
     def raw_img(frame):
@@ -135,8 +139,12 @@ class App:
             _range = data.max() - data.min()
             return (data - data.min()) / _range
 
-        data = normalization(data)
-        img_gray = (data*255).astype('uint8')
+
+        out_data = None
+        out_data = cv2.normalize(data, out_data, 0, 255, cv2.NORM_MINMAX)
+        # print(out_data)
+        # print(out_data)
+        img_gray = (out_data).astype('uint8')
         heatmap_g = img_gray.astype('uint8')
         frame = applyColorMap(heatmap_g, COLORMAP_JET)
         return frame
@@ -153,18 +161,21 @@ class App:
         date = os.path.basename(path_).split('.')[0].split('_')[0:2]
         data_path = glob.glob('{}/data/{}_{}_*.csv'.format(father_path, date[0], date[1]))[0]
         video_path = glob.glob('{}/video/{}_{}_*.mp4'.format(father_path, date[0], date[1]))[0]
-        print(data_path, video_path)
-
+        # print(data_path, video_path)
         self.data = pd.read_csv(data_path, index_col=None).iloc[:, 2:]
         self.cap = cv2.VideoCapture(video_path)
         self.bar['to'] = self.cap.get(cv2.CAP_PROP_FRAME_COUNT)
         self.bar['tickinterval'] = int(self.bar['to']/10)
+        print(len(self.data), self.bar['to'])
+        self.update_win(0)
 
-        while True:
-            self.update_win()
+        # while True:
+        #     try:
+        #         self.update_win()
+        #     except Exception as e:
+        #         break
 
         # self.auto_play()
-        # self.update_win(0)
 
 
 if __name__ == "__main__":

@@ -23,6 +23,8 @@ class App:
         self.quit_status = False
         self.play_status = False
         self.play_control = th.Thread(target=self.start_play)
+        self.play_control.daemon = True
+        self.keep_length = 0
         self.app = Tk()
         self.app.resizable(width=False, height=False)
         self.app.title("Video marking tool")
@@ -100,8 +102,8 @@ class App:
         self.app.bind('<Control-o>', self.select_path)
         self.app.bind('<space>', self.start_pause)
 
-        self.app.bind('<Up>', self.submit_label)#38
-        self.app.bind('<Down>', self.submit_label)#40
+        self.app.bind('<,>', self.submit_label)#188
+        self.app.bind('<.>', self.submit_label)#190
         self.app.bind('<Left>', self.submit_label)#37
         self.app.bind('<Right>', self.submit_label)#39
         self.app.bind('<Return>', self.submit_label)#13
@@ -109,7 +111,6 @@ class App:
         self.load_label_csv()
         self.app.protocol("WM_DELETE_WINDOW", self.on_closing)
         self.app.mainloop()
-
 
     def get_fir_frame(self, pos):
         df = self.data[pos:pos+1]
@@ -182,10 +183,14 @@ class App:
         return ImageTk.PhotoImage(Image.fromarray(img))
 
     def select_path(self, event=None):
-        # self.quit_status = True
         path_ = askopenfilename()
         if path_:
+            # auto save when select new csv file
+            if os.path.basename(path_) != self.current_selected_file:
+                self.save_labels()
             self.quit_status = True
+            self.keep_length = 0
+
             father_path = os.path.dirname(os.path.dirname(path_))
             date = os.path.basename(path_).split('.')[0].split('_')[0:2]
             data_path = glob.glob(
@@ -207,36 +212,37 @@ class App:
         # self.start_pause()
 
     def submit_label(self, event=None):
-        def update_last_line(_file, start=None, end=None, action=None):
+        # print(event)
+        def update_last_line(keep_length=0, start=0, end=0, action=None):
+            keep_string = ','.join(self.label_list.get(END).split(',')[0:keep_length+1])
             self.label_list.delete(END)
-            if not start:
-                self.label_list.insert(END, '{}'.format(_file))
-            elif not end:
-                self.label_list.insert(END, '{},{}'.format(_file, start))
+            if end == 0:
+                pre = ',{}'.format(start)
             elif not action:
-                self.label_list.insert(END, '{},{},{}'.format(_file, start, end))
+                pre = ',{},{}'.format(start, end)
             else:
-                self.label_list.insert(END, '{},{},{},{}'.format(_file, start, end, action))
+                pre = ',{},{},{},'.format(start, end, action)
+            self.label_list.insert(END, keep_string+pre)
         
-        if event.keycode == 38:
+        if event.keycode == 188:
             self.bar.set(self.bar.get()-1)
-        if event.keycode == 40:
+        if event.keycode == 190:
             self.bar.set(self.bar.get()+1)
 
         if event.keycode == 37:
             self.current_start_pos = self.bar.get()
-            update_last_line(self.current_selected_file, self.current_start_pos)
+            update_last_line(self.keep_length, self.current_start_pos)
 
         if event.keycode == 39:
             self.current_end_pos = self.bar.get()
-            update_last_line(self.current_selected_file, self.current_start_pos, self.current_end_pos)
+            update_last_line(self.keep_length, self.current_start_pos, self.current_end_pos)
 
         if event.keycode == 13:
             if self.current_start_pos < self.current_end_pos:
-                update_last_line(self.current_selected_file, self.current_start_pos, self.current_end_pos, self.current_label.get())
-                with open(r'core\labels.csv', 'a+') as f:
-                    f.write(self.label_list.get(END)+'\n')
-                self.load_label_csv()
+                update_last_line(self.keep_length, self.current_start_pos, self.current_end_pos, self.current_label.get())
+                self.current_start_pos = 0
+                self.current_end_pos = 0
+                self.keep_length += 3
             else:
                 messagebox.askokcancel("Error", "End postion must bigger than Start position.")
 
@@ -244,12 +250,23 @@ class App:
         self.label_list.delete(0, END)
         with open(path, 'r') as f:
             for i in f.readlines():
-                if i != '':
+                if i:
                     self.label_list.insert(END, i)
         # self.label_list.select_set(END)
 
+    def save_labels(self):
+        def get_last_line():
+            with open(r'core\labels.csv', 'r') as csvfile:
+                mLines = csvfile.readlines()
+            return mLines[-1]
+
+        if self.label_list.get(END) != get_last_line() and len(self.label_list.get(END).split(',')) >= 4:
+            with open(r'core\labels.csv', 'a+') as f:
+                f.write(self.label_list.get(END)+'\n')
+
     def on_closing(self):
         if messagebox.askokcancel("Quit", "Do you want to quit?"):
+            self.save_labels()
             self.quit_status = True
             self.app.destroy()
 

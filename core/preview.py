@@ -4,7 +4,7 @@ from time import sleep, time
 from PIL import Image, ImageTk
 from cv2 import NORM_MINMAX, CAP_PROP_FRAME_COUNT, CAP_PROP_POS_FRAMES, COLORMAP_JET, INTER_CUBIC, INTER_NEAREST, GaussianBlur, normalize, VideoCapture, applyColorMap, imread, imshow, merge, resize, split, waitKey
 from numpy import array, cumsum, insert, mean, ndarray, reshape, sort, sqrt, where
-from tkinter import END, Button, Checkbutton, Entry, HORIZONTAL, IntVar, Label, LabelFrame, Listbox, Menu, Radiobutton, Scale, StringVar, Tk, font, messagebox, ttk
+from tkinter import Button, Checkbutton, BOTTOM, RIGHT, X, END, Entry, HORIZONTAL, IntVar, Label, LabelFrame, Listbox, Menu, Radiobutton, Scale, Scrollbar, StringVar, Tk, font, messagebox, ttk
 from tkinter.filedialog import askopenfilename
 import os
 import glob
@@ -73,19 +73,24 @@ class App:
         label_frame.pack(side='top', fill='both', expand=True, padx=10, pady=5)
 
         v = StringVar()
-        Radiobutton(label_frame, text='走路', variable=v, value='walk').pack(side='left')
-        Radiobutton(label_frame, text='站着', variable=v, value='stand').pack(side='left')
-        Radiobutton(label_frame, text='起身', variable=v, value='standup').pack(side='left')
-        Radiobutton(label_frame, text='坐着', variable=v, value='sit').pack(side='left')
-        Radiobutton(label_frame, text='坐下', variable=v, value='sitdown').pack(side='left')
-        Radiobutton(label_frame, text='摔倒', variable=v, value='falling').pack(side='left')
-        Radiobutton(label_frame, text='躺下', variable=v, value='lying').pack(side='left')
-        Radiobutton(label_frame, text='睡觉（像只活蛆）', variable=v, value='sleeping').pack(side='left')
-        Radiobutton(label_frame, text='蹲下', variable=v, value='squat').pack(side='left')
+        Radiobutton(label_frame, text='走路', variable=v, value='walk').pack(padx=5, side='left')
+        Radiobutton(label_frame, text='站着', variable=v, value='stand').pack(padx=5, side='left')
+        Radiobutton(label_frame, text='起身', variable=v, value='standup').pack(padx=5, side='left')
+        Radiobutton(label_frame, text='坐着', variable=v, value='sit').pack(padx=5, side='left')
+        Radiobutton(label_frame, text='坐下', variable=v, value='sitdown').pack(padx=5, side='left')
+        Radiobutton(label_frame, text='摔倒', variable=v, value='falling').pack(padx=5, side='left')
+        Radiobutton(label_frame, text='摔倒后挣扎/不动', variable=v, value='falled').pack(padx=5, side='left')
+        Radiobutton(label_frame, text='躺下', variable=v, value='lying').pack(padx=5, side='left')
+        Radiobutton(label_frame, text='睡觉（活蛆）', variable=v, value='sleeping').pack(padx=5, side='left')
+        Radiobutton(label_frame, text='活动', variable=v, value='active').pack(padx=5, side='left')
         v.set('walk')
 
         label_list = Listbox(self.app, width=100)
-        label_list.pack(side='left', fill='both', expand=True, padx=10, pady=10)
+        label_list.pack(side='top', fill='both', expand=True, padx=10, pady=10)
+
+        xscrollbar = Scrollbar(self.app, orient=HORIZONTAL, command=label_list.xview)
+        xscrollbar.pack(side=BOTTOM, fill=X)
+        label_list.config(xscrollcommand=xscrollbar.set)
 
         self.left_view = left_view
         self.right_view = right_view
@@ -138,7 +143,7 @@ class App:
         self.right_view.image = img_right
         
         self.bar.set(pos)
-        self.label_list.select_set(END)
+        # self.label_list.select_set(END)
         self.label_list.see(END)
         self.app.update()
 

@@ -1,35 +1,22 @@
-import tkinter
-import threading as th
-import time
+from keras.models import Sequential
+from keras.layers import Dense, Dropout
+from keras.layers import Embedding
+from keras.layers import Conv1D, GlobalAveragePooling1D, MaxPooling1D
 
-win = tkinter.Tk()
-win.title("system")
-'''
-供用户通过拖拽指示器改变变量的值，可以水平，也可以垂直
-orient       设置指示器方向（水平，垂直）
-tkinter.HORIZONTAL   水平
-tkinter.VERTICAL     垂直
-length               水平时表示宽度，垂直时表示高度
-tickinterval          选择值将会为该值的倍数
-'''
-#默认垂直，由上向下
-scale=tkinter.Scale(win,from_=0,to=100,orient=tkinter.HORIZONTAL,
-                    tickinterval=100,length=200)
-scale.pack()
-#设置初始值
-scale.set(20)
+seq_length = 64
 
-def get_scale_pos():
-    while True:
-        print(scale.get())
-        time.sleep(1/50)
+model = Sequential()
+model.add(Conv1D(64, 3, activation='relu', input_shape=(seq_length, 100)))
+model.add(Conv1D(64, 3, activation='relu'))
+model.add(MaxPooling1D(3))
+model.add(Conv1D(128, 3, activation='relu'))
+model.add(Conv1D(128, 3, activation='relu'))
+model.add(GlobalAveragePooling1D())
+model.add(Dropout(0.5))
+model.add(Dense(1, activation='sigmoid'))
 
-a = th.Thread(target=get_scale_pos)
-a.start()
+model.compile(loss='binary_crossentropy',
+              optimizer='rmsprop',
+              metrics=['accuracy'])
 
-def showNum():
-    print(scale.get())
-
-tkinter.Button(win,text="打印",command=showNum).pack()
-
-win.mainloop()
+model.summary()

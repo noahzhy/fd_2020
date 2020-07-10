@@ -26,7 +26,7 @@ class App:
         self.play_control.daemon = True
         self.keep_length = 0
         self.app = Tk()
-        self.app.resizable(width=False, height=False)
+        # self.app.resizable(width=False, height=False)
         self.app.title("Video marking tool")
         # self.app.iconbitmap("icon.ico")
 
@@ -85,7 +85,7 @@ class App:
         v.set('walk')
 
         label_list = Listbox(self.app, width=100)
-        label_list.pack(padx=10, pady=10)
+        label_list.pack(side='left', fill='both', expand=True, padx=10, pady=10)
 
         self.left_view = left_view
         self.right_view = right_view
@@ -139,6 +139,7 @@ class App:
         
         self.bar.set(pos)
         self.label_list.select_set(END)
+        self.label_list.see(END)
         self.app.update()
 
     def start_pause(self, event=None):
@@ -256,19 +257,24 @@ class App:
 
     def save_labels(self):
         def get_last_line():
-            with open(r'core\labels.csv', 'r') as csvfile:
-                mLines = csvfile.readlines()
-            return mLines[-1]
+            try:
+                with open(r'core\labels.csv', 'r') as csvfile:
+                    mLines = csvfile.readlines()
+                return mLines[-1]
+            except IndexError as e:
+                return ''
 
-        if self.label_list.get(END) != get_last_line() and len(self.label_list.get(END).split(',')) >= 4:
-            with open(r'core\labels.csv', 'a+') as f:
-                f.write(self.label_list.get(END)+'\n')
+        if self.label_list.get(END) != get_last_line():
+            if len(self.label_list.get(END).split(',')) >= 4:
+                with open(r'core\labels.csv', 'a+') as f:
+                    f.write(self.label_list.get(END)+'\n')
 
     def on_closing(self):
         if messagebox.askokcancel("Quit", "Do you want to quit?"):
             self.save_labels()
             self.quit_status = True
             self.app.destroy()
+
 
 if __name__ == "__main__":
     app = App()

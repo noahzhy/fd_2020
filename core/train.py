@@ -1,8 +1,4 @@
-import glob
-import collections
-import re
-import random
-import os
+import glob, collections, re, random, os
 import argparse
 import numpy as np
 import pandas as pd

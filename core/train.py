@@ -20,7 +20,7 @@ epochs = 5
 
 
 def load_data():
-    pass
+    return (xtrain, ytrain), (xtest, ytest)
 
 
 def define_CNN_LSTM():
@@ -37,7 +37,11 @@ def define_CNN_LSTM():
     model.add(LSTM(64, return_sequences=False))
     # model.add(Dense(64, activation='relu'))
     model.add(Dense(10, activation='softmax'))
-    model.compile(loss='categorical_crossentropy', optimizer='rmsprop', metrics=['acc'])
+    model.compile(
+        optimizer=optimizers.RMSprop(),
+        loss='categorical_crossentropy',
+        metrics=['acc']
+    )
 
     model.summary()
     plot_model(model, to_file='model.png', rankdir='TB')
@@ -48,8 +52,14 @@ def define_CNN_LSTM():
     # return pred
 
 def fit_model(model):
-    history = model.fit(xtrain, ytrain, batch_size=batch_size, epochs=epochs)
-    
+    history = model.fit_generator(
+        xtrain,
+        ytrain,
+        batch_size=batch_size,
+        epochs=epochs,
+        validation_data=(xtest, ytest)
+    )
+
     model.save("fir_32x24.h5")
     return history
 
@@ -59,26 +69,22 @@ def show_acc_loss(history):
     val_acc = history.history['val_acc']
     loss = history.history['loss']
     val_loss = history.history['val_loss']
-
     epochs = range(1, len(acc)+1)
 
     plt.plot(epochs, acc, 'bo', label='Training acc')
     plt.plot(epochs, val_acc, 'b', label='Validation acc')
     plt.title('Training and validation accuracy')
     plt.legend()
-
     plt.figure()
-
     plt.plot(epochs, loss, 'bo', label='Training loss')
     plt.plot(epochs, val_loss, 'b', label='Validation loss')
     plt.title('Training and validation loss')
     plt.legend()
-    
     plt.show()
 
 
 if __name__ == "__main__":
-    xtrain, ytrain = load_data()
+    (xtrain, ytrain), (xtest, ytest) = load_data()
     model = define_CNN_LSTM(xtrain, ytrain)
     history = fit_model(model)
     show_acc_loss(history)

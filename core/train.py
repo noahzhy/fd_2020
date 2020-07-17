@@ -11,11 +11,13 @@ from keras.models import *
 from keras.utils import plot_model
 from keras import optimizers, callbacks, backend
 
-# set the seed to random fixly
+from core.DataGenerator import DataGenerator
+
+
 # SEED = 11
 # random.seed(a=SEED)
 
-batch_size = 1000
+batch_size = 128
 epochs = 5
 
 
@@ -27,6 +29,8 @@ def define_CNN_LSTM():
     model = Sequential()
     # Total params: 995,210
     model.add(TimeDistributed(Conv2D(32, (3, 3), padding='same', activation='relu'), input_shape=(None, 32, 24, 1)))
+    # BatchNormalization maybe doesn't work on small batch size
+    model.add(TimeDistributed(BatchNormalization()))
     model.add(TimeDistributed(MaxPooling2D((2, 2))))
     model.add(TimeDistributed(Conv2D(64, (3, 3), padding='same', activation='relu')))
     model.add(TimeDistributed(MaxPooling2D((2, 2))))
@@ -51,7 +55,7 @@ def define_CNN_LSTM():
     # pred = model.predict(xtest)
     # return pred
 
-def fit_model(model):
+def fit_model(model, xtest, ytest):
     history = model.fit_generator(
         xtrain,
         ytrain,
@@ -75,16 +79,21 @@ def show_acc_loss(history):
     plt.plot(epochs, val_acc, 'b', label='Validation acc')
     plt.title('Training and validation accuracy')
     plt.legend()
+
     plt.figure()
+
     plt.plot(epochs, loss, 'bo', label='Training loss')
     plt.plot(epochs, val_loss, 'b', label='Validation loss')
     plt.title('Training and validation loss')
     plt.legend()
+
     plt.show()
 
 
 if __name__ == "__main__":
-    (xtrain, ytrain), (xtest, ytest) = load_data()
-    model = define_CNN_LSTM(xtrain, ytrain)
-    history = fit_model(model)
-    show_acc_loss(history)
+    parser = argparse.ArgumentParser()
+
+    # (xtrain, ytrain), (xtest, ytest) = load_data()
+    model = define_CNN_LSTM()
+    # history = fit_model(model, xtrain, ytrain)
+    # show_acc_loss(history)

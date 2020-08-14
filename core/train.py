@@ -12,6 +12,7 @@ from keras.utils import plot_model
 from keras import optimizers, callbacks, backend
 
 from core.DataGenerator import DataGenerator
+from keras.preprocessing.image import ImageDataGenerator
 
 
 # SEED = 11
